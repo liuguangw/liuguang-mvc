@@ -23,6 +23,8 @@ class Route
 
     protected static $nameMap = [];
 
+    protected static $actionMap = [];
+
     protected $url;
 
     protected $parseCallback;
@@ -138,6 +140,7 @@ class Route
         if ($this->name != '') {
             self::$nameMap[$this->name] = $this;
         }
+        self::$actionMap[$moduleName . '/' . $controllerId . '/' . $actionId] = $this;
         foreach ($this->requestMethods as $method) {
             self::$rules[$method][$this->urlType][$this->url] = $this;
         }
@@ -218,6 +221,76 @@ class Route
             }
         }
         throw new NotFoundHttpException('路由不存在');
+    }
+
+    private static function buildUrl(string $url, bool $fullUrl = false, array $options = [])
+    {
+        $url = Application::$app->publicContext . $url;
+        if ($fullUrl) {
+            $request = Application::$request;
+            $config = Application::$app->config;
+            if (isset($options['scheme'])) {
+                $scheme = $options['scheme'];
+            } else {
+                $scheme = $config->get('app_scheme', $request->getScheme());
+            }
+            if (isset($options['host'])) {
+                $host = $options['host'];
+            } else {
+                $host = $config->get('app_host', $request->getHttpHost());
+            }
+            $url = $scheme . '://' . $host . $url;
+        }
+        return $url;
+    }
+
+    public function makeDistUrl(array $actionParams = []): string
+    {
+        if ($this->urlType == self::TYPE_EQUAL) {
+            $url = $this->url;
+        } else {
+            list ($url, $actionParams) = call_user_func($this->creatorCallback, $actionParams);
+        }
+        if (! empty($actionParams)) {
+            $url .= ('?' . http_build_query($actionParams));
+        }
+        return $url;
+    }
+
+    public static function createUrl(string $actionStr, array $params = [], bool $fullUrl = false, array $options = []): string
+    {
+        $route = self::findRoute($actionStr);
+        return self::createUrlByRoute($route, $params, $fullUrl, $options);
+    }
+
+    public static function createUrlByName(string $routeName, array $params = [], bool $fullUrl = false, array $options = []): string
+    {
+        $route = self::findRouteByName($routeName);
+        return self::createUrlByRoute($route, $params, $fullUrl, $options);
+    }
+
+    public static function createUrlByRoute(Route $route, array $params = [], bool $fullUrl = false, array $options = []): string
+    {
+        $url = $route->makeDistUrl($params);
+        return self::buildUrl($url, $fullUrl, $options);
+    }
+
+    public static function findRoute(string $actionStr): Route
+    {
+        list ($moduleName, $controllerId, $actionId) = Application::$app->resolveActionId($actionStr);
+        $uniqueId = $moduleName . '/' . $controllerId . '/' . $actionId;
+        if (isset(self::$actionMap[$uniqueId])) {
+            return self::$actionMap[$uniqueId];
+        }
+        throw new ServerErrorHttpException('找不到' . $uniqueId . '对应的路由');
+    }
+
+    public static function findRouteByName(string $routeName): Route
+    {
+        if (isset(self::$nameMap[$routeName])) {
+            return self::$nameMap[$routeName];
+        }
+        throw new ServerErrorHttpException('找不到名称为' . $routeName . '的路由');
     }
 }
 

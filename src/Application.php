@@ -178,12 +178,12 @@ class Application
         if (! isset($this->controllers[$uniqueId])) {
             $controllerClass = $this->config->get('appControllerNs') . '\\' . str_replace('.', '\\', $moduleName) . '\\';
             if (strpos($controllerId, '-')) {
-                $controllerId = ucwords(str_replace('-', ' ', $controllerId));
-                $controllerId = str_replace(' ', '', $controllerId);
+                $controllerName = ucwords(str_replace('-', ' ', $controllerId));
+                $controllerName = str_replace(' ', '', $controllerId);
             } else {
-                $controllerId = ucfirst($controllerId);
+                $controllerName = ucfirst($controllerId);
             }
-            $controllerClass .= $controllerId;
+            $controllerClass .= $controllerName;
             $suffix = $this->config->get('controllerClassSuffix', '');
             $controllerClass .= $suffix;
             if (! class_exists($controllerClass)) {
@@ -233,9 +233,9 @@ class Application
         ];
         if (empty($emptyResult)) {
             $emptyResult = [
-                $this->controller->action->id,
+                $this->controller->moduleName,
                 $this->controller->id,
-                $this->controller->moduleName
+                $this->controller->actionId
             ];
         }
         for ($i = 0; $i < 3; $i ++) {
@@ -254,6 +254,7 @@ class Application
 
     public function sendResponse(): void
     {
+        self::$response->prepare(self::$request);
         self::$response->send();
     }
 }
