@@ -3,6 +3,7 @@ namespace liuguang\mvc;
 
 use Symfony\Component\HttpFoundation\Response;
 use liuguang\mvc\exceptions\ServerErrorHttpException;
+use liuguang\mvc\handlers\ITemplate;
 
 class Controller
 {
@@ -92,5 +93,44 @@ class Controller
      */
     public function afterResponse(string $actionId, Response $response): void
     {}
+
+    /**
+     * 获取布局名称
+     *
+     * @return string
+     */
+    public function getLayoutName(): string
+    {
+        return 'main';
+    }
+
+    /**
+     * 获取模板名称
+     *
+     * @param string $actionStr            
+     * @return string
+     */
+    public function getTemplateName(string $actionStr = '')
+    {
+        list ($moduleName, $controllerId, $actionId) = Application::$app->resolveActionId($actionStr);
+        return $moduleName . '/' . $controllerId . '/' . $actionId;
+    }
+
+    private function makeTemplateObject(): ITemplate
+    {
+        return Application::$app->container->makeAlias('template');
+    }
+
+    public function view(array $params = [], string $actionStr = '', string $contentType = '')
+    {
+        $template = $this->makeTemplateObject();
+        $template->setLayout($this->getLayoutName());
+        $template->setTemplateName($this->getTemplateName($actionStr));
+        $template->addParams($params);
+        if ($contentType != '') {
+            $template->setContentType($contentType);
+        }
+        return $template->display();
+    }
 }
 

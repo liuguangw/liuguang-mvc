@@ -86,6 +86,7 @@ class Application
         }
         $mvcConfig = Config::loadFromPhpFile(MVC_SRC_PATH . '/../config.inc.php');
         $this->config = $mvcConfig->merge($config);
+        date_default_timezone_set($this->config->get('defaultTimeZone'));
         if (self::$request === null) {
             self::$request = Request::createFromGlobals();
         }
@@ -138,7 +139,9 @@ class Application
             exit();
         });
         set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+            if (error_reporting() != 0) {
+                throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+            }
         });
     }
 

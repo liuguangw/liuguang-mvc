@@ -220,7 +220,7 @@ class Route
                 }
             }
         }
-        throw new NotFoundHttpException('路由不存在');
+        throw new NotFoundHttpException('访问的页面不存在');
     }
 
     private static function buildUrl(string $url, bool $fullUrl = false, array $options = [])
