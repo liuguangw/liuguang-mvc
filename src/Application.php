@@ -7,6 +7,8 @@ use Symfony\Component\Debug\ExceptionHandler;
 use liuguang\mvc\handlers\IErrorHandler;
 use liuguang\mvc\handlers\IRouteHandler;
 use liuguang\mvc\exceptions\ServerErrorHttpException;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Doctrine\DBAL\Connection;
 define('MVC_SRC_PATH', __DIR__);
 
 /**
@@ -259,5 +261,25 @@ class Application
     {
         self::$response->prepare(self::$request);
         self::$response->send();
+    }
+
+    /**
+     * 获取session对象
+     *
+     * @return SessionInterface
+     */
+    public function getSession(): SessionInterface
+    {
+        return $this->container->makeAlias('session');
+    }
+
+    /**
+     * 获取数据库连接对象
+     *
+     * @return Connection
+     */
+    public function getDb(int $dbIndex = 0): Connection
+    {
+        return $this->container->makeAlias('db', $dbIndex);
     }
 }

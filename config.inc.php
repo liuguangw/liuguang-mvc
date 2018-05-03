@@ -10,5 +10,6 @@ return [
     'forceRebuildTemplate' => true,
     'defaultContentType' => 'text/html; charset=UTF-8',
     'defaultTimeZone' => 'Asia/Shanghai',
-    'staticUrlVersion' => 'v1'
+    'staticUrlVersion' => 'v1',
+    'dbConfigList' => []
 ];
