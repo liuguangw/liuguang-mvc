@@ -7,7 +7,8 @@ return [
     'defaultController' => 'index',
     'defaultAction' => 'index',
     'templateDir' => constant('APP_SRC_PATH') . '/./template',
-    'useTemplateCache' => false,
+    'forceRebuildTemplate' => true,
     'defaultContentType' => 'text/html; charset=UTF-8',
-    'defaultTimeZone' => 'Asia/Shanghai'
+    'defaultTimeZone' => 'Asia/Shanghai',
+    'staticUrlVersion' => 'v1'
 ];

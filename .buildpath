@@ -16,6 +16,11 @@
 			<attribute name="composer" value="vendor"/>
 		</attributes>
 	</buildpathentry>
+	<buildpathentry kind="src" path="vendor/liuguang/template/src">
+		<attributes>
+			<attribute name="composer" value="vendor"/>
+		</attributes>
+	</buildpathentry>
 	<buildpathentry kind="src" path="vendor/myclabs/deep-copy/src/DeepCopy">
 		<attributes>
 			<attribute name="composer" value="vendor"/>
@@ -142,6 +147,11 @@
 		</attributes>
 	</buildpathentry>
 	<buildpathentry kind="src" path="vendor/sebastian/version/src">
+		<attributes>
+			<attribute name="composer" value="vendor"/>
+		</attributes>
+	</buildpathentry>
+	<buildpathentry kind="src" path="vendor/symfony/asset">
 		<attributes>
 			<attribute name="composer" value="vendor"/>
 		</attributes>

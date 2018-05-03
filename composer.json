@@ -7,7 +7,9 @@
 	"require": {
 		"php": ">=7.1",
 		"symfony/http-foundation": "^4.0",
-		"symfony/debug": "^4.0"
+		"symfony/debug": "^4.0",
+		"symfony/asset": "^4.0",
+		"liuguang/template": "^1.0"
 	},
 	"keywords": [
 		"php7",
