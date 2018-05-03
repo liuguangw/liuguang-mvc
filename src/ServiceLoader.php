@@ -15,6 +15,8 @@ use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\NativeFileSessionHandler;
 use Doctrine\DBAL\Connection;
+use Psr\SimpleCache\CacheInterface;
+use Symfony\Component\Cache\Simple\FilesystemCache;
 
 class ServiceLoader
 {
@@ -37,6 +39,8 @@ class ServiceLoader
         $this->container->addNameMap(UrlAsset::class, DefaultUrlAsset::class, 'urlAsset');
         $this->container->addNameMap(ITemplate::class, DefaultTemplate::class, 'template', false);
         $this->container->addNameMap(ClientInfo::class, '', 'clientInfo');
+        // cache
+        $this->container->addNameMap(CacheInterface::class, FilesystemCache::class, 'cache');
         // session
         $this->container->addCallableMap(SessionInterface::class, function () {
             if (! Application::$request->hasSession()) {
