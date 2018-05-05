@@ -52,9 +52,10 @@ class ServiceLoader
         }, 'session');
         // 注册数据库连接
         $dbConfigList = Application::$app->config->get('dbConfigList', []);
-        foreach ($dbConfigList as $dbIndex => $dbConfig) {
-            $this->container->addCallableMap(Connection::class, function () use ($dbConfig) {
+        foreach ($dbConfigList as $dbIndex => $dbConfigPath) {
+            $this->container->addCallableMap(Connection::class, function () use ($dbConfigPath) {
                 $config = new \Doctrine\DBAL\Configuration();
+                $dbConfig = include $dbConfigPath;
                 return \Doctrine\DBAL\DriverManager::getConnection($dbConfig, $config);
             }, 'db', true, $dbIndex);
         }
