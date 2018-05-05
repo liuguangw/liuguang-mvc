@@ -110,10 +110,10 @@ class Application
             return;
         }
         // context
-        if (PHP_SAPI == 'cli') {
-            throw new \Exception('constant APP_PUBLIC_CONTEXT is not defined');
-        } elseif (defined('APP_PUBLIC_CONTEXT')) {
+        if (defined('APP_PUBLIC_CONTEXT')) {
             $this->publicContext = constant('APP_PUBLIC_CONTEXT');
+        } elseif (PHP_SAPI == 'cli') {
+            throw new \Exception('constant APP_PUBLIC_CONTEXT is not defined');
         } else {
             $context = '';
             $scriptName = self::$request->getScriptName();
