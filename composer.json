@@ -11,7 +11,8 @@
 		"symfony/asset": "^4.0",
 		"liuguang/template": "^1.0",
 		"doctrine/dbal": "^2.7",
-		"symfony/cache": "^4.0"
+		"symfony/cache": "^4.0",
+		"symfony/console": "^4.0"
 	},
 	"keywords": [
 		"php7",

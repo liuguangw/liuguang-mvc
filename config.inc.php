@@ -12,5 +12,9 @@ return [
     'defaultTimeZone' => 'Asia/Shanghai',
     'staticUrlVersion' => 'v1',
     'app_url_type' => 1,
-    'dbConfigList' => []
+    'dbConfigList' => [],
+    'migrationDir' => constant('APP_SRC_PATH') . '/./migrations',
+    'migrationTable' => 'migrations',
+    'migrationNs' => 'app\migrations',
+    'migrationLogerConn' => 0
 ];
