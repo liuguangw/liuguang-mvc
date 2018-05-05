@@ -39,9 +39,14 @@ class Config
         return $this;
     }
 
+    public function has(string $key): bool
+    {
+        return array_key_exists($key, $this->configArray);
+    }
+
     public function get(string $key, $default = null)
     {
-        if (array_key_exists($key, $this->configArray)) {
+        if ($this->has($key)) {
             return $this->configArray[$key];
         } else {
             return $default;

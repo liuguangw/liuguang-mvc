@@ -12,6 +12,27 @@ class Route
 
     const TYPE_MATCH = 1;
 
+    /**
+     * 根据配置文件决定生成的URL是完整的还是缩略的
+     *
+     * @var integer
+     */
+    const URL_DIST_CONFIG = 0;
+
+    /**
+     * 生成缩略URL
+     *
+     * @var integer
+     */
+    const URL_DIST_SHORT = 1;
+
+    /**
+     * 生成完整URL
+     *
+     * @var integer
+     */
+    const URL_DIST_LONG = 2;
+
     protected static $rules = [
         'get' => [],
         'post' => [],
@@ -223,21 +244,42 @@ class Route
         throw new NotFoundHttpException('访问的页面不存在');
     }
 
-    private static function buildUrl(string $url, bool $fullUrl = false, array $options = [])
+    private static function buildUrl(string $url, int $distUrlType = 0, array $options = [])
     {
         $url = Application::$app->publicContext . $url;
-        if ($fullUrl) {
+        if (! in_array($distUrlType, [
+            self::URL_DIST_CONFIG,
+            self::URL_DIST_SHORT,
+            self::URL_DIST_LONG
+        ])) {
+            $distUrlType = self::URL_DIST_CONFIG;
+        }
+        if ($distUrlType == self::URL_DIST_CONFIG) {
+            $config = Application::$app->config;
+            $distUrlType = $config->get('app_url_type');
+            if ($distUrlType == self::URL_DIST_LONG) {
+                $configOptions = [];
+                if ($config->has('app_scheme')) {
+                    $configOptions['scheme'] = $config->get('app_scheme');
+                }
+                if ($config->has('app_host')) {
+                    $configOptions['host'] = $config->get('app_host');
+                }
+                $options = array_merge($configOptions, $options);
+            }
+        }
+        if ($distUrlType == self::URL_DIST_LONG) {
             $request = Application::$request;
             $config = Application::$app->config;
             if (isset($options['scheme'])) {
                 $scheme = $options['scheme'];
             } else {
-                $scheme = $config->get('app_scheme', $request->getScheme());
+                $scheme = $request->getScheme();
             }
             if (isset($options['host'])) {
                 $host = $options['host'];
             } else {
-                $host = $config->get('app_host', $request->getHttpHost());
+                $host = $request->getHttpHost();
             }
             $url = $scheme . '://' . $host . $url;
         }
@@ -257,22 +299,22 @@ class Route
         return $url;
     }
 
-    public static function createUrl(string $actionStr, array $params = [], bool $fullUrl = false, array $options = []): string
+    public static function createUrl(string $actionStr, array $params = [], int $distUrlType = 0, array $options = []): string
     {
         $route = self::findRoute($actionStr);
-        return self::createUrlByRoute($route, $params, $fullUrl, $options);
+        return self::createUrlByRoute($route, $params, $distUrlType, $options);
     }
 
-    public static function createUrlByName(string $routeName, array $params = [], bool $fullUrl = false, array $options = []): string
+    public static function createUrlByName(string $routeName, array $params = [], int $distUrlType = 0, array $options = []): string
     {
         $route = self::findRouteByName($routeName);
-        return self::createUrlByRoute($route, $params, $fullUrl, $options);
+        return self::createUrlByRoute($route, $params, $distUrlType, $options);
     }
 
-    public static function createUrlByRoute(Route $route, array $params = [], bool $fullUrl = false, array $options = []): string
+    public static function createUrlByRoute(Route $route, array $params = [], int $distUrlType = 0, array $options = []): string
     {
         $url = $route->makeDistUrl($params);
-        return self::buildUrl($url, $fullUrl, $options);
+        return self::buildUrl($url, $distUrlType, $options);
     }
 
     public static function findRoute(string $actionStr): Route

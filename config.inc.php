@@ -11,5 +11,6 @@ return [
     'defaultContentType' => 'text/html; charset=UTF-8',
     'defaultTimeZone' => 'Asia/Shanghai',
     'staticUrlVersion' => 'v1',
+    'app_url_type' => 1,
     'dbConfigList' => []
 ];

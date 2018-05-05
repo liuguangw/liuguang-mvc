@@ -18,7 +18,7 @@ class DefaultTemplate implements ITemplate
     public function __construct()
     {
         $config = Application::$app->config;
-        $template = new TemplateEngine('_', $config->get('templateDir'));
+        $template = new TemplateEngine('_', $config->get('templateDir'), $config->get('templateCacheDir', ''));
         $template->setForceRebuild($config->get('forceRebuildTemplate'));
         $this->template = $template;
         $this->contentType = $config->get('defaultContentType');
