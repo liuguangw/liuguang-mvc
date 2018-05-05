@@ -94,7 +94,7 @@ class Application
         }
     }
 
-    private function startApplication(): void
+    private function startApplication(bool $initTest): void
     {
         // ioc容器
         $this->container = new ObjectContainer();
@@ -125,7 +125,9 @@ class Application
         }
         // 加载路由
         $this->setRouteHandler($this->container->makeAlias('routeHandler'));
-        $this->invokeRoute(Route::resolveRequest(self::$request));
+        if (! $initTest) {
+            $this->invokeRoute(Route::resolveRequest(self::$request));
+        }
     }
 
     private function loadService(ServiceLoader $service): void
@@ -169,11 +171,11 @@ class Application
      *
      * @return void
      */
-    public static function init(Config $config = null): void
+    public static function init(Config $config = null, bool $initTest = false): void
     {
         if (self::$app === null) {
             self::$app = new self($config);
-            self::$app->startApplication();
+            self::$app->startApplication($initTest);
         }
     }
 
