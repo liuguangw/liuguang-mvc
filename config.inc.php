@@ -13,8 +13,10 @@ return [
     'staticUrlVersion' => 'v1',
     'app_url_type' => 1,
     'dbConfigList' => [],
+    // 默认连接的编号
+    'appConn' => 0,
     'migrationDir' => constant('APP_SRC_PATH') . '/./migrations',
     'migrationTable' => 'migrations',
-    'migrationNs' => 'app\migrations',
-    'migrationLogerConn' => 0
+    'migrationNs' => 'app\migrations'
+    // 'migrationLogerConn' => 0
 ];

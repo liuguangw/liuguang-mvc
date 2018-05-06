@@ -25,7 +25,8 @@ class MigrationLoger
     public function __construct()
     {
         $config = Application::$app->config;
-        $this->conn = Application::$app->getDb($config->get('migrationLogerConn'));
+        $connIndex = $config->get('migrationLogerConn', $config->get('appConn'));
+        $this->conn = Application::$app->getDb($connIndex);
         $this->tableName = $config->get('migrationTable');
         $schemaManager = $this->conn->getSchemaManager();
         if (! $schemaManager->tablesExist($this->tableName)) {

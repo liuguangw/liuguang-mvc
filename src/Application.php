@@ -280,8 +280,11 @@ class Application
      *
      * @return Connection
      */
-    public function getDb(int $dbIndex = 0): Connection
+    public function getDb(?int $dbIndex = null): Connection
     {
+        if ($dbIndex === null) {
+            $dbIndex = Application::$app->config->get('appConn');
+        }
         return $this->container->makeAlias('db', $dbIndex);
     }
 }

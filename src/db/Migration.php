@@ -10,7 +10,7 @@ abstract class Migration
 
     public function getConnectionIndex(): int
     {
-        return 0;
+        return Application::$app->config->get('appConn');
     }
 
     public final function getName(): string
