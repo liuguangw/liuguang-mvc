@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Session\Storage\Handler\NativeFileSessionHa
 use Doctrine\DBAL\Connection;
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\Cache\Simple\FilesystemCache;
+use Symfony\Component\HttpFoundation\Session\Storage\SessionStorageInterface;
 
 class ServiceLoader
 {
@@ -42,10 +43,14 @@ class ServiceLoader
         // cache
         $this->container->addNameMap(CacheInterface::class, FilesystemCache::class, 'cache');
         // session
+        $this->container->addCallableMap(SessionStorageInterface::class, function () {
+            return new NativeSessionStorage(array(), new NativeFileSessionHandler());
+        });
         $this->container->addCallableMap(SessionInterface::class, function () {
             if (! Application::$request->hasSession()) {
-                $sessionStorage = new NativeSessionStorage(array(), new NativeFileSessionHandler());
+                $sessionStorage = Application::$app->container->make(SessionStorageInterface::class);
                 $session = new Session($sessionStorage);
+                $session->start();
                 Application::$request->setSession($session);
             }
             return Application::$request->getSession();

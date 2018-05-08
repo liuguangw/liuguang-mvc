@@ -14,15 +14,15 @@ class ObjectContainer
 
     private $relationMap;
 
-    private $instanceMap;
-
     private $aliasMap;
+
+    private $singletonMap;
 
     public function __construct()
     {
         $this->relationMap = [];
-        $this->instanceMap = [];
         $this->aliasMap = [];
+        $this->singletonMap = [];
     }
 
     private function getRelationKey(string $interfaceName, int $implIndex): string
@@ -117,11 +117,11 @@ class ObjectContainer
         }
         $configData = $this->relationMap[$relationKey][$implIndex];
         if ($configData['isSingleton']) {
-            if (! isset($this->instanceMap[$relationKey])) {
-                $object = $this->makeObject($configData);
-                $this->instanceMap[$relationKey] = $object;
+            $suffix = '#' . $implIndex;
+            if (! $this->hasBindSingleton($interfaceName, $suffix)) {
+                $this->bindSingleton($this->makeObject($configData), $interfaceName, $suffix);
             }
-            return $this->instanceMap[$relationKey];
+            return $this->createSingleton($interfaceName, $suffix);
         } else {
             return $this->makeObject($configData);
         }
@@ -139,6 +139,44 @@ class ObjectContainer
             throw new ContainerException('alias: ' . $alias . ' is not defined');
         }
         return $this->make($this->aliasMap[$alias], $implIndex);
+    }
+
+    /**
+     * 判断是否绑定了单例对象
+     *
+     * @param object $obj            
+     * @param string $classname            
+     * @param string $suffix            
+     */
+    public function hasBindSingleton(string $classname, string $suffix = ''): void
+    {
+        return isset($this->singletonMap[$classname . $suffix]);
+    }
+
+    /**
+     * 绑定单例对象
+     *
+     * @param object $obj            
+     * @param string $classname            
+     * @param string $suffix            
+     */
+    public function bindSingleton($obj, string $classname, string $suffix = ''): void
+    {
+        $this->singletonMap[$classname . $suffix] = $obj;
+    }
+
+    /**
+     * 创建单例对象
+     *
+     * @param string $classname            
+     * @param string $suffix            
+     */
+    public function createSingleton(string $classname, string $suffix = '')
+    {
+        if (! $this->hasBindSingleton($classname, $suffix)) {
+            $this->bindSingleton(new $classname(), $classname, $suffix);
+        }
+        return $this->singletonMap[$classname . $suffix];
     }
 }
 
