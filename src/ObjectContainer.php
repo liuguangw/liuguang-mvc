@@ -144,11 +144,11 @@ class ObjectContainer
     /**
      * 判断是否绑定了单例对象
      *
-     * @param object $obj            
      * @param string $classname            
      * @param string $suffix            
+     * @return bool
      */
-    public function hasBindSingleton(string $classname, string $suffix = ''): void
+    public function hasBindSingleton(string $classname, string $suffix = ''): bool
     {
         return isset($this->singletonMap[$classname . $suffix]);
     }
@@ -159,6 +159,7 @@ class ObjectContainer
      * @param object $obj            
      * @param string $classname            
      * @param string $suffix            
+     * @return void
      */
     public function bindSingleton($obj, string $classname, string $suffix = ''): void
     {
@@ -170,6 +171,7 @@ class ObjectContainer
      *
      * @param string $classname            
      * @param string $suffix            
+     * @return object
      */
     public function createSingleton(string $classname, string $suffix = '')
     {
