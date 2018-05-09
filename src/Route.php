@@ -254,32 +254,24 @@ class Route
         ])) {
             $distUrlType = self::URL_DIST_CONFIG;
         }
+        $config = Application::$app->config;
         if ($distUrlType == self::URL_DIST_CONFIG) {
-            $config = Application::$app->config;
             $distUrlType = $config->get('app_url_type');
-            if ($distUrlType == self::URL_DIST_LONG) {
-                $configOptions = [];
-                if ($config->has('app_scheme')) {
-                    $configOptions['scheme'] = $config->get('app_scheme');
-                }
-                if ($config->has('app_host')) {
-                    $configOptions['host'] = $config->get('app_host');
-                }
-                $options = array_merge($configOptions, $options);
-            }
         }
         if ($distUrlType == self::URL_DIST_LONG) {
-            $request = Application::$request;
-            $config = Application::$app->config;
             if (isset($options['scheme'])) {
                 $scheme = $options['scheme'];
+            } elseif ($config->has('app_scheme')) {
+                $scheme = $config->get('app_scheme');
             } else {
-                $scheme = $request->getScheme();
+                $scheme = Application::$request->getScheme();
             }
             if (isset($options['host'])) {
                 $host = $options['host'];
+            } elseif ($config->has('app_host')) {
+                $host = $config->get('app_host');
             } else {
-                $host = $request->getHttpHost();
+                $host = Application::$request->getHttpHost();
             }
             $url = $scheme . '://' . $host . $url;
         }
