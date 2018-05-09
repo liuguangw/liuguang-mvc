@@ -45,6 +45,7 @@ class MigrateDownCommand extends Command
                     $output->writeln('<info>success to down migrate: ' . $name . '</info>');
                 } catch (\Exception $e) {
                     $output->writeln('<error>' . $e->getMessage() . '</error>');
+                    break;
                 }
             }
         } else {

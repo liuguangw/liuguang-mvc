@@ -45,6 +45,7 @@ class MigrateUpCommand extends Command
                     $output->writeln('<info>success to up migrate: ' . $name . '</info>');
                 } catch (\Exception $e) {
                     $output->writeln('<error>' . $e->getMessage() . '</error>');
+                    break;
                 }
             }
         } else {
