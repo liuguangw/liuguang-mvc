@@ -9,6 +9,7 @@ use liuguang\mvc\handlers\IRouteHandler;
 use liuguang\mvc\exceptions\ServerErrorHttpException;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Doctrine\DBAL\Connection;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 define('MVC_SRC_PATH', __DIR__);
 
 /**
@@ -70,6 +71,16 @@ class Application
      */
     private $controllers = [];
 
+    /**
+     *
+     * @var EventDispatcher
+     */
+    private $eventDispatcher;
+
+    const EVENT_BEFORE_RESPONSE = 'evt.before.response';
+
+    const EVENT_AFTER_RESPONSE = 'evt.after.response';
+
     private function __construct(Config $config = null)
     {
         if (! defined('APP_PUBLIC_PATH')) {
@@ -98,6 +109,8 @@ class Application
     {
         // ioc容器
         $this->container = new ObjectContainer();
+        // 事件
+        $this->eventDispatcher = new EventDispatcher();
         // 加载服务
         $serviceClass = $this->config->get('serviceClass');
         $service = new $serviceClass($this->container);
@@ -259,10 +272,26 @@ class Application
         return array_reverse($resultArray);
     }
 
+    /**
+     * 添加事件处理器
+     *
+     * @param string $eventName
+     *            事件名
+     * @param callable $listener
+     *            处理器
+     * @return void
+     */
+    public function addListener(string $eventName, callable $listener): void
+    {
+        $this->eventDispatcher->addListener($eventName, $listener);
+    }
+
     public function sendResponse(): void
     {
+        $this->eventDispatcher->dispatch(self::EVENT_BEFORE_RESPONSE);
         self::$response->prepare(self::$request);
         self::$response->send();
+        $this->eventDispatcher->dispatch(self::EVENT_AFTER_RESPONSE);
     }
 
     /**

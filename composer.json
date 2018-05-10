@@ -12,7 +12,8 @@
 		"liuguang/template": "^1.0",
 		"doctrine/dbal": "^2.7",
 		"symfony/cache": "^4.0",
-		"symfony/console": "^4.0"
+		"symfony/console": "^4.0",
+		"symfony/event-dispatcher": "^4.0"
 	},
 	"keywords": [
 		"php7",
