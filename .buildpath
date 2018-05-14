@@ -51,6 +51,11 @@
 			<attribute name="composer" value="vendor"/>
 		</attributes>
 	</buildpathentry>
+	<buildpathentry kind="src" path="vendor/filp/whoops/src/Whoops">
+		<attributes>
+			<attribute name="composer" value="vendor"/>
+		</attributes>
+	</buildpathentry>
 	<buildpathentry kind="src" path="vendor/liuguang/template/src">
 		<attributes>
 			<attribute name="composer" value="vendor"/>
@@ -207,11 +212,6 @@
 		</attributes>
 	</buildpathentry>
 	<buildpathentry kind="src" path="vendor/symfony/console">
-		<attributes>
-			<attribute name="composer" value="vendor"/>
-		</attributes>
-	</buildpathentry>
-	<buildpathentry kind="src" path="vendor/symfony/debug">
 		<attributes>
 			<attribute name="composer" value="vendor"/>
 		</attributes>

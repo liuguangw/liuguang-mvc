@@ -3,13 +3,13 @@ namespace liuguang\mvc;
 
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Debug\ExceptionHandler;
 use liuguang\mvc\handlers\IErrorHandler;
 use liuguang\mvc\handlers\IRouteHandler;
 use liuguang\mvc\exceptions\ServerErrorHttpException;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use liuguang\mvc\handlers\DefaultErrorHandler;
 define('MVC_SRC_PATH', __DIR__);
 
 /**
@@ -84,8 +84,7 @@ class Application
     private function __construct(Config $config = null)
     {
         if (! defined('APP_PUBLIC_PATH')) {
-            $handler = new ExceptionHandler();
-            $handler->handle(new \Exception('constant APP_PUBLIC_PATH is not defined'));
+            $this->traceError(new \ErrorException('constant APP_PUBLIC_PATH is not defined'));
             exit();
         }
         if (! defined('APP_SRC_PATH')) {
@@ -118,8 +117,7 @@ class Application
             $this->loadService($service);
             $this->setErrorHandler($this->container->makeAlias('errorHandler'));
         } catch (\Exception $e) {
-            $handler = new ExceptionHandler();
-            $handler->handle($e);
+            $this->traceError($e);
             return;
         }
         // context
@@ -141,6 +139,19 @@ class Application
         if (! $initTest) {
             $this->invokeRoute(Route::resolveRequest(self::$request));
         }
+    }
+
+    /**
+     * 尚未注册错误处理器时,提示错误信息
+     *
+     * @param \Throwable $err            
+     * @return void
+     */
+    private function traceError(\Throwable $err): void
+    {
+        $handler = new DefaultErrorHandler();
+        self::$response = $handler->handle($err);
+        $this->sendResponse();
     }
 
     private function loadService(ServiceLoader $service): void
@@ -288,10 +299,16 @@ class Application
 
     public function sendResponse(): void
     {
-        $this->eventDispatcher->dispatch(self::EVENT_BEFORE_RESPONSE);
-        self::$response->prepare(self::$request);
+        if ($this->eventDispatcher !== null) {
+            $this->eventDispatcher->dispatch(self::EVENT_BEFORE_RESPONSE);
+        }
+        if (self::$request !== null) {
+            self::$response->prepare(self::$request);
+        }
         self::$response->send();
-        $this->eventDispatcher->dispatch(self::EVENT_AFTER_RESPONSE);
+        if ($this->eventDispatcher !== null) {
+            $this->eventDispatcher->dispatch(self::EVENT_AFTER_RESPONSE);
+        }
     }
 
     /**
