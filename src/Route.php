@@ -127,18 +127,38 @@ class Route
         $this->requestMethods = $requestMethods;
     }
 
-    public function setName(string $name)
+    /**
+     * 为路由设置别名
+     *
+     * @param string $name            
+     * @return Route
+     */
+    public function setName(string $name): Route
     {
         $this->name = $name;
         return $this;
     }
 
-    public function getName(string $name)
+    /**
+     * 获取路由别名
+     *
+     * @return string
+     */
+    public function getName(): string
     {
         return $this->name;
     }
 
-    public function setCallback(callable $parseCallback, callable $creatorCallback)
+    /**
+     * 设置路由回调方法(用于正则匹配url)
+     *
+     * @param callable $parseCallback
+     *            路由参数解析回调
+     * @param callable $creatorCallback
+     *            路由url生成回调
+     * @return $this
+     */
+    public function setCallback(callable $parseCallback, callable $creatorCallback): Route
     {
         $this->parseCallback = $parseCallback;
         $this->creatorCallback = $creatorCallback;
@@ -146,7 +166,14 @@ class Route
         return $this;
     }
 
-    public function bind(string $actionStr = '')
+    /**
+     * 将路由绑定到控制器的操作
+     *
+     * @param string $actionStr
+     *            操作
+     * @return void
+     */
+    public function bind(string $actionStr = ''): void
     {
         $config = Application::$app->config;
         $emptyResult = [
@@ -168,83 +195,125 @@ class Route
     }
 
     /**
+     * 获取当前路由的模块名
      *
-     * @return the $moduleName
+     * @return string 模块名
      */
-    public function getModuleName()
+    public function getModuleName(): string
     {
         return $this->moduleName;
     }
 
     /**
+     * 获取当前路由的控制器名
      *
-     * @return the $controllerId
+     * @return string 控制器名
      */
-    public function getControllerId()
+    public function getControllerId(): string
     {
         return $this->controllerId;
     }
 
     /**
+     * 获取当前路由的操作名
      *
-     * @return the $actionId
+     * @return string 操作名
      */
-    public function getActionId()
+    public function getActionId(): string
     {
         return $this->actionId;
     }
 
-    public function getIdentity()
+    /**
+     * 获取路由标识(url或者正则表达式)
+     *
+     * @return string
+     */
+    public function getIdentity(): string
     {
         return $this->url;
     }
 
+    /**
+     * 获取正则匹配中得到的参数数组
+     *
+     * @param array $matchData            
+     * @return array
+     */
     public function parseActionParams(array $matchData): array
     {
         return call_user_func($this->parseCallback, $matchData);
     }
 
+    /**
+     * 将请求解析为路由信息
+     *
+     * @param Request $request            
+     * @throws ServerErrorHttpException
+     * @throws NotFoundHttpException
+     * @return Route
+     */
     public static function resolveRequest(Request $request): Route
     {
+        // 过滤context
         $requestUri = $request->getRequestUri();
         if (Application::$app->publicContext != '') {
             $requestUri = substr($requestUri, strlen(Application::$app->publicContext));
         }
+        // 解析url的path和参数部分
         $uriInfo = parse_url($requestUri);
         $path = $uriInfo['path'];
         if (isset($uriInfo['query'])) {
             $params = [];
             parse_str($uriInfo['query'], $params);
+            // 向request中写入GET参数
             $request->query->add($params);
         }
+        // 获取请求方式(GET、POST...)
         $requestMethod = strtolower($request->getMethod());
         if (! isset(self::$rules[$requestMethod])) {
             throw new ServerErrorHttpException('known request method ' . $requestMethod);
         }
+        // 获取对应请求方式的所以路由规则(完全匹配规则)
         $rules = self::$rules[$requestMethod];
         if (isset($rules[self::TYPE_EQUAL])) {
             $equalCollection = $rules[self::TYPE_EQUAL];
             foreach ($equalCollection as $routeInfo) {
+                // 如果找到完全匹配地址,则返回路由对象
                 if ($routeInfo->getIdentity() == $path) {
                     return $routeInfo;
                 }
             }
         }
+        // 无完全匹配条目、进行正则匹配
         if (isset($rules[self::TYPE_MATCH])) {
             $matchCollection = $rules[self::TYPE_MATCH];
             foreach ($matchCollection as $routeInfo) {
                 $identity = $routeInfo->getIdentity();
                 if (preg_match($identity, $path, $matchData) != 0) {
+                    // 正则匹配的URL中的额外参数加入request对象
                     $matchParams = $routeInfo->parseActionParams($matchData);
                     $request->query->add($matchParams);
                     return $routeInfo;
                 }
             }
         }
+        // 没有匹配到任何路由
         throw new NotFoundHttpException('访问的页面不存在');
     }
 
-    private static function buildUrl(string $url, int $distUrlType = 0, array $options = [])
+    /**
+     * 构建URL
+     *
+     * @param string $url
+     *            原URL
+     * @param int $distUrlType
+     *            目标URL类型
+     * @param array $options
+     *            [string host,string scheme]
+     * @return string
+     */
+    private static function buildUrl(string $url, int $distUrlType = 0, array $options = []): string
     {
         $url = Application::$app->publicContext . $url;
         if (! in_array($distUrlType, [
@@ -278,6 +347,12 @@ class Route
         return $url;
     }
 
+    /**
+     * 生成目标url
+     * 
+     * @param array $actionParams 附加url参数
+     * @return string
+     */
     public function makeDistUrl(array $actionParams = []): string
     {
         if ($this->urlType == self::TYPE_EQUAL) {
@@ -291,24 +366,58 @@ class Route
         return $url;
     }
 
+    /**
+     * 根据action生成url
+     * 
+     * @param string $actionStr
+     * @param array $params
+     * @param int $distUrlType
+     * @param array $options
+     * @return string
+     */
     public static function createUrl(string $actionStr, array $params = [], int $distUrlType = 0, array $options = []): string
     {
         $route = self::findRoute($actionStr);
         return self::createUrlByRoute($route, $params, $distUrlType, $options);
     }
-
+    
+    /**
+     * 根据路由名称生成url
+     * 
+     * @param string $routeName
+     * @param array $params
+     * @param int $distUrlType
+     * @param array $options
+     * @return string
+     */
     public static function createUrlByName(string $routeName, array $params = [], int $distUrlType = 0, array $options = []): string
     {
         $route = self::findRouteByName($routeName);
         return self::createUrlByRoute($route, $params, $distUrlType, $options);
     }
 
+    /**
+     * 根据路由对象生成url
+     * 
+     * @param Route $route
+     * @param array $params
+     * @param int $distUrlType
+     * @param array $options
+     * @return string
+     */
     public static function createUrlByRoute(Route $route, array $params = [], int $distUrlType = 0, array $options = []): string
     {
         $url = $route->makeDistUrl($params);
         return self::buildUrl($url, $distUrlType, $options);
     }
 
+    /**
+     * 根据action查找路由
+     * 
+     * @param string $actionStr
+     * @throws ServerErrorHttpException
+     * @return Route
+     */
     public static function findRoute(string $actionStr): Route
     {
         list ($moduleName, $controllerId, $actionId) = Application::$app->resolveActionId($actionStr);
@@ -319,6 +428,13 @@ class Route
         throw new ServerErrorHttpException('找不到' . $uniqueId . '对应的路由');
     }
 
+    /**
+     * 根据路由名称查找路由
+     * 
+     * @param string $routeName
+     * @throws ServerErrorHttpException
+     * @return Route
+     */
     public static function findRouteByName(string $routeName): Route
     {
         if (isset(self::$nameMap[$routeName])) {

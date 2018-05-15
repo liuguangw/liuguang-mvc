@@ -3,6 +3,12 @@ namespace liuguang\mvc;
 
 use liuguang\mvc\exceptions\ContainerException;
 
+/**
+ * ioc容器和单例容器
+ * 
+ * @author liuguang
+ *
+ */
 class ObjectContainer
 {
 

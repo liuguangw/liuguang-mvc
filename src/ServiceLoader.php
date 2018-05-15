@@ -33,11 +33,12 @@ class ServiceLoader
         $this->container = $container;
     }
 
-    public function loadService()
+    public function loadService(): void
     {
         $this->container->addNameMap(IErrorHandler::class, DefaultErrorHandler::class, 'errorHandler');
         $this->container->addNameMap(IRouteHandler::class, DefaultRouteHandler::class, 'routeHandler');
         $this->container->addNameMap(UrlAsset::class, DefaultUrlAsset::class, 'urlAsset');
+        // 模板非单例
         $this->container->addNameMap(ITemplate::class, DefaultTemplate::class, 'template', false);
         $this->container->addNameMap(ClientInfo::class, '', 'clientInfo');
         // cache

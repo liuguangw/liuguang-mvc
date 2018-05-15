@@ -3,6 +3,13 @@ namespace liuguang\mvc\handlers;
 
 use liuguang\mvc\Application;
 
+/**
+ * 客户端信息
+ * 项目中应当根据部署情况(是否使用了cdn、反代等情况)重写部分方法
+ *
+ * @author liuguang
+ *        
+ */
 class ClientInfo
 {
 

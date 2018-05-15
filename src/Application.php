@@ -24,36 +24,42 @@ class Application
     const VERSION = '1.0';
 
     /**
+     * 项目app单例
      *
      * @var Application
      */
     public static $app = null;
 
     /**
+     * 请求对象
      *
      * @var Request
      */
     public static $request = null;
 
     /**
+     * 响应对象(控制器的操作返回被调用后才有)
      *
      * @var Response
      */
     public static $response = null;
 
     /**
+     * 对象容器
      *
      * @var ObjectContainer
      */
     public $container;
 
     /**
+     * 当前控制器对象
      *
      * @var Controller
      */
     public $controller;
 
     /**
+     * 配置对象
      *
      * @var Config
      */
@@ -66,12 +72,7 @@ class Application
     public $publicContext;
 
     /**
-     *
-     * @var array
-     */
-    private $controllers = [];
-
-    /**
+     * 事件分发工具
      *
      * @var EventDispatcher
      */
@@ -81,6 +82,11 @@ class Application
 
     const EVENT_AFTER_RESPONSE = 'evt.after.response';
 
+    /**
+     *
+     * @param Config $config
+     *            配置对象
+     */
     private function __construct(Config $config = null)
     {
         if (! defined('APP_PUBLIC_PATH')) {
@@ -104,6 +110,14 @@ class Application
         }
     }
 
+    /**
+     * 启动项目
+     *
+     * @param bool $initTest
+     *            是否启动测试
+     * @throws \Exception
+     * @return void
+     */
     private function startApplication(bool $initTest): void
     {
         // ioc容器
@@ -154,12 +168,25 @@ class Application
         $this->sendResponse();
     }
 
+    /**
+     * 加载服务绑定
+     *
+     * @param ServiceLoader $service            
+     * @return void
+     */
     private function loadService(ServiceLoader $service): void
     {
         $service->loadService();
     }
 
-    private function setErrorHandler(IErrorHandler $handler)
+    /**
+     * 设置错误处理handler
+     *
+     * @param IErrorHandler $handler            
+     * @throws \ErrorException
+     * @return void
+     */
+    private function setErrorHandler(IErrorHandler $handler): void
     {
         set_exception_handler(function ($err) use ($handler) {
             Application::$response = $handler->handle($err);
@@ -173,11 +200,24 @@ class Application
         });
     }
 
+    /**
+     * 加载路由配置
+     *
+     * @param IRouteHandler $handler            
+     * @return void
+     */
     private function setRouteHandler(IRouteHandler $handler): void
     {
         $handler->load();
     }
 
+    /**
+     * 根据路由对象,执行对应的控制器的方法
+     *
+     * @param Route $route
+     *            解析得到的路由对象
+     * @return void
+     */
     public function invokeRoute(Route $route): void
     {
         $moduleName = $route->getModuleName();
@@ -193,6 +233,10 @@ class Application
     /**
      * 项目入口
      *
+     * @param Config $config
+     *            配置对象
+     * @param bool $initTest
+     *            是否为测试,默认为false(测试将不执行控制器)
      * @return void
      */
     public static function init(Config $config = null, bool $initTest = false): void
@@ -203,11 +247,22 @@ class Application
         }
     }
 
+    /**
+     * 控制器单例工厂
+     *
+     * @param string $moduleName            
+     * @param string $controllerId            
+     * @param string $actionId            
+     * @throws ServerErrorHttpException
+     * @return Controller
+     */
     private function makeController(string $moduleName, string $controllerId, string $actionId): Controller
     {
         $uniqueId = $moduleName . '/' . $controllerId;
-        if (! isset($this->controllers[$uniqueId])) {
+        $suffix = '#controller';
+        if (! $this->container->hasBindSingleton($uniqueId, $suffix)) {
             $controllerClass = $this->config->get('appControllerNs') . '\\' . str_replace('.', '\\', $moduleName) . '\\';
+            // abc-def-ghi=>AbcDefGhi
             if (strpos($controllerId, '-')) {
                 $controllerName = ucwords(str_replace('-', ' ', $controllerId));
                 $controllerName = str_replace(' ', '', $controllerId);
@@ -215,16 +270,28 @@ class Application
                 $controllerName = ucfirst($controllerId);
             }
             $controllerClass .= $controllerName;
-            $suffix = $this->config->get('controllerClassSuffix', '');
-            $controllerClass .= $suffix;
+            $controllerClass .= $this->config->get('controllerClassSuffix', '');
             if (! class_exists($controllerClass)) {
-                throw new ServerErrorHttpException('控制器:' . $moduleName . '/' . $controllerId . '不存在');
+                throw new ServerErrorHttpException('控制器:' . $moduleName . '/' . $controllerId . '对应的类[' . $controllerClass . ']不存在');
             }
-            $this->controllers[$uniqueId] = new $controllerClass($moduleName, $controllerId, $actionId);
+            $controllerObj = new $controllerClass($moduleName, $controllerId, $actionId);
+            $this->container->bindSingleton($controllerObj, $uniqueId, $suffix);
+            return $controllerObj;
         }
-        return $this->controllers[$uniqueId];
+        return $this->container->createSingleton($uniqueId, $suffix);
     }
 
+    /**
+     * 调用操作
+     *
+     * @param string $moduleName
+     *            模块名
+     * @param string $controllerId
+     *            控制器名
+     * @param string $actionId
+     *            操作名
+     * @return Response
+     */
     public function runAction(string $moduleName, string $controllerId, string $actionId): Response
     {
         $this->controller = $this->makeController($moduleName, $controllerId, $actionId);
@@ -234,7 +301,7 @@ class Application
     /**
      * 解析actionId
      *
-     * @param string $actionId            
+     * @param string $actionStr            
      * @param array $emptyResult            
      * @return array [模块名,控制器名,操作名]
      * @throws \Exception
@@ -255,7 +322,7 @@ class Application
             '控制器ID',
             '模块名'
         ];
-        $moduleRexp = '#^([a-z_][a-z0-9_]*\.)*[a-z_][a-z0-9_]*$#';
+        $moduleRexp = '#^[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*$#';
         $actionRexp = '#^[a-z_][a-z0-9_]*(\-[a-z0-9_]*)*$#';
         $rexpArray = [
             $actionRexp,
@@ -297,6 +364,11 @@ class Application
         $this->eventDispatcher->addListener($eventName, $listener);
     }
 
+    /**
+     * 发送响应
+     *
+     * @return void
+     */
     public function sendResponse(): void
     {
         if ($this->eventDispatcher !== null) {
@@ -329,7 +401,7 @@ class Application
     public function getDb(?int $dbIndex = null): Connection
     {
         if ($dbIndex === null) {
-            $dbIndex = Application::$app->config->get('appConn');
+            $dbIndex = $this->config->get('appConn');
         }
         return $this->container->makeAlias('db', $dbIndex);
     }

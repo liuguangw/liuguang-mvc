@@ -110,7 +110,7 @@ class Controller
      * @param string $actionStr            
      * @return string
      */
-    public function getTemplateName(string $actionStr = '')
+    public function getTemplateName(string $actionStr = ''): string
     {
         list ($moduleName, $controllerId, $actionId) = Application::$app->resolveActionId($actionStr);
         return $moduleName . '/' . $controllerId . '/' . $actionId;

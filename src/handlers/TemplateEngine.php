@@ -4,6 +4,12 @@ namespace liuguang\mvc\handlers;
 use liuguang\template\TemplateEngine as SuperTemplateEngine;
 use liuguang\mvc\Application;
 
+/**
+ * 模板扩展
+ * 
+ * @author liuguang
+ *
+ */
 class TemplateEngine extends SuperTemplateEngine
 {
 
