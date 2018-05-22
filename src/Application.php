@@ -265,7 +265,7 @@ class Application
             // abc-def-ghi=>AbcDefGhi
             if (strpos($controllerId, '-')) {
                 $controllerName = ucwords(str_replace('-', ' ', $controllerId));
-                $controllerName = str_replace(' ', '', $controllerId);
+                $controllerName = str_replace(' ', '', $controllerName);
             } else {
                 $controllerName = ucfirst($controllerId);
             }
