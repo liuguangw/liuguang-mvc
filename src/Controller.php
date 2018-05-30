@@ -64,11 +64,12 @@ class Controller
         if ($this->actionId != $actionId) {
             $this->actionId = $actionId;
         }
+        $response = null;
         $actionMethodName = $this->getActionMethodName($actionId);
         try {
             $methodInfo = new \ReflectionMethod($this, $actionMethodName);
             if ($methodInfo->isPublic()) {
-                $response = $methodInfo->invoke($this);
+                $response = $this->invokeAction($methodInfo);
             } else {
                 throw new ServerErrorHttpException('操作:' . $this->getUniqueActionId() . '不存在');
             }
@@ -76,6 +77,35 @@ class Controller
             throw new ServerErrorHttpException('操作:' . $this->getUniqueActionId() . '不存在');
         }
         return $response;
+    }
+
+    private function invokeAction(\ReflectionMethod $methodInfo): Response
+    {
+        // 获取参数
+        if ($methodInfo->getNumberOfParameters() == 0) {
+            return $methodInfo->invoke($this);
+        }
+        // 控制器参数注入
+        $paramsArr = $methodInfo->getParameters();
+        $args = [];
+        $container = Application::$app->container;
+        foreach ($paramsArr as $paramInfo) {
+            /**
+             *
+             * @var \ReflectionClass $interfaceInfo
+             */
+            $interfaceInfo = $paramInfo->getClass();
+            if (empty($interfaceInfo)) {
+                throw new ServerErrorHttpException('操作方法的参数缺少接口声明');
+            }
+            $interfaceName = $interfaceInfo->getName();
+            if ($container->hasBindRelation($interfaceName)) {
+                $args[] = $container->make($interfaceName);
+            } else {
+                $args[] = $container->createSingleton($interfaceName);
+            }
+        }
+        return $methodInfo->invokeArgs($this, $args);
     }
 
     /**

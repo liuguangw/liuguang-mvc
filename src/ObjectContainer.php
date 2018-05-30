@@ -5,9 +5,9 @@ use liuguang\mvc\exceptions\ContainerException;
 
 /**
  * ioc容器和单例容器
- * 
- * @author liuguang
  *
+ * @author liuguang
+ *        
  */
 class ObjectContainer
 {
@@ -107,6 +107,12 @@ class ObjectContainer
                 break;
         }
         return $object;
+    }
+
+    public function hasBindRelation(string $interfaceName, int $implIndex = 0): bool
+    {
+        $relationKey = $this->getRelationKey($interfaceName, $implIndex);
+        return isset($this->relationMap[$relationKey]);
     }
 
     /**
