@@ -41,13 +41,47 @@ class Config
 
     public function has(string $key): bool
     {
-        return array_key_exists($key, $this->configArray);
+        $keyNames = explode('.', $key);
+        $arr = &$this->configArray;
+        while (count($keyNames) > 1) {
+            $currentKey = array_shift($keyNames);
+            if (array_key_exists($currentKey, $arr)) {
+                if (! is_array($arr[$currentKey])) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+            $arr = &$arr[$currentKey];
+        }
+        if (! is_array($arr)) {
+            return false;
+        } else {
+            return array_key_exists(array_shift($keyNames), $arr);
+        }
     }
 
     public function get(string $key, $default = null)
     {
-        if ($this->has($key)) {
-            return $this->configArray[$key];
+        $keyNames = explode('.', $key);
+        $arr = &$this->configArray;
+        while (count($keyNames) > 1) {
+            $currentKey = array_shift($keyNames);
+            if (array_key_exists($currentKey, $arr)) {
+                if (! is_array($arr[$currentKey])) {
+                    return $default;
+                }
+            } else {
+                return $default;
+            }
+            $arr = &$arr[$currentKey];
+        }
+        if (! is_array($arr)) {
+            return $default;
+        }
+        $currentKey = array_shift($keyNames);
+        if (array_key_exists($currentKey, $arr)) {
+            return $arr[$currentKey];
         } else {
             return $default;
         }
@@ -55,12 +89,38 @@ class Config
 
     public function set(string $key, $value): void
     {
-        $this->configArray[$key] = $value;
+        $keyNames = explode('.', $key);
+        $arr = &$this->configArray;
+        while (count($keyNames) > 1) {
+            $currentKey = array_shift($keyNames);
+            if (array_key_exists($currentKey, $arr)) {
+                if (! is_array($arr[$currentKey])) {
+                    $arr[$currentKey] = [];
+                }
+            } else {
+                $arr[$currentKey] = [];
+            }
+            $arr = &$arr[$currentKey];
+        }
+        $arr[array_shift($keyNames)] = $value;
     }
 
     public function delete(string $key): void
     {
-        unset($this->configArray[$key]);
+        $keyNames = explode('.', $key);
+        $arr = &$this->configArray;
+        while (count($keyNames) > 1) {
+            $currentKey = array_shift($keyNames);
+            if (array_key_exists($currentKey, $arr)) {
+                if (! is_array($arr[$currentKey])) {
+                    return;
+                }
+            } else {
+                return;
+            }
+            $arr = &$arr[$currentKey];
+        }
+        unset($arr[array_shift($keyNames)]);
     }
 
     public function clear(): void
