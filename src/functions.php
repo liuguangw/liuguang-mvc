@@ -60,3 +60,15 @@ function createSingleton(string $classname, string $suffix = '')
 {
     return Application::$app->container->createSingleton($classname, $suffix);
 }
+
+/**
+ * 读取配置
+ *
+ * @param string $key            
+ * @param mixed $default            
+ * @return mixed
+ */
+function getConfig(string $key, $default = null)
+{
+    return Application::$app->config->get($key, $default);
+}
