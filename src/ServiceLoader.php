@@ -18,6 +18,8 @@ use Doctrine\DBAL\Connection;
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\Cache\Simple\FilesystemCache;
 use Symfony\Component\HttpFoundation\Session\Storage\SessionStorageInterface;
+use liuguang\mvc\command\CommandLoader;
+use liuguang\mvc\command\DefaultCommandLoader;
 
 class ServiceLoader
 {
@@ -65,6 +67,8 @@ class ServiceLoader
                 return \Doctrine\DBAL\DriverManager::getConnection($dbConfig, $config);
             }, 'db', true, $dbIndex);
         }
+        // 注册命令行工具
+        $this->container->addNameMap(CommandLoader::class, DefaultCommandLoader::class, 'commandLoader');
     }
 }
 
