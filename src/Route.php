@@ -44,13 +44,13 @@ class Route
 
     protected static $nameMap = [];
 
-    protected static $actionMap = [];
-
     protected $url;
 
     protected $parseCallback;
 
     protected $creatorCallback;
+
+    protected $resolveCallback;
 
     protected $urlType = 0;
 
@@ -167,6 +167,34 @@ class Route
     }
 
     /**
+     * 解析路由时,设置请求相关信息
+     *
+     * @param Request $request            
+     * @param string $path            
+     * @return voids
+     */
+    public function setRequestInfo(Request $request, string $path): void
+    {
+        if ($this->resolveCallback !== null) {
+            list ($this->moduleName, $this->controllerId, $this->actionId) = call_user_func($this->resolveCallback, $request, $path);
+        }
+    }
+
+    /**
+     * 获取路由信息
+     *
+     * @return array
+     */
+    public function getRouteInfo(): array
+    {
+        return [
+            $this->moduleName,
+            $this->controllerId,
+            $this->actionId
+        ];
+    }
+
+    /**
      * 将路由绑定到控制器的操作
      *
      * @param string $actionStr
@@ -185,43 +213,27 @@ class Route
         $this->moduleName = $moduleName;
         $this->controllerId = $controllerId;
         $this->actionId = $actionId;
-        if ($this->name != '') {
-            self::$nameMap[$this->name] = $this;
+        if ($this->name == '') {
+            $this->name = '@' . $moduleName . '/' . $controllerId . '/' . $actionId;
         }
-        self::$actionMap[$moduleName . '/' . $controllerId . '/' . $actionId] = $this;
+        self::$nameMap[$this->name] = $this;
         foreach ($this->requestMethods as $method) {
             self::$rules[$method][$this->urlType][$this->url] = $this;
         }
     }
 
     /**
-     * 获取当前路由的模块名
+     * 绑定路由到控制器的操作中(操作需要调用此回调解析)
      *
-     * @return string 模块名
+     * @param callable $resolveCallback            
+     * @return void
      */
-    public function getModuleName(): string
+    public function bindResolveCallback(callable $resolveCallback): void
     {
-        return $this->moduleName;
-    }
-
-    /**
-     * 获取当前路由的控制器名
-     *
-     * @return string 控制器名
-     */
-    public function getControllerId(): string
-    {
-        return $this->controllerId;
-    }
-
-    /**
-     * 获取当前路由的操作名
-     *
-     * @return string 操作名
-     */
-    public function getActionId(): string
-    {
-        return $this->actionId;
+        $this->resolveCallback = $resolveCallback;
+        foreach ($this->requestMethods as $method) {
+            self::$rules[$method][$this->urlType][$this->url] = $this;
+        }
     }
 
     /**
@@ -281,6 +293,7 @@ class Route
             foreach ($equalCollection as $routeInfo) {
                 // 如果找到完全匹配地址,则返回路由对象
                 if ($routeInfo->getIdentity() == $path) {
+                    $routeInfo->setRequestInfo($request, $path);
                     return $routeInfo;
                 }
             }
@@ -294,6 +307,7 @@ class Route
                     // 正则匹配的URL中的额外参数加入request对象
                     $matchParams = $routeInfo->parseActionParams($matchData);
                     $request->query->add($matchParams);
+                    $routeInfo->setRequestInfo($request, $path);
                     return $routeInfo;
                 }
             }
@@ -349,8 +363,9 @@ class Route
 
     /**
      * 生成目标url
-     * 
-     * @param array $actionParams 附加url参数
+     *
+     * @param array $actionParams
+     *            附加url参数
      * @return string
      */
     public function makeDistUrl(array $actionParams = []): string
@@ -368,26 +383,26 @@ class Route
 
     /**
      * 根据action生成url
-     * 
-     * @param string $actionStr
-     * @param array $params
-     * @param int $distUrlType
-     * @param array $options
+     *
+     * @param string $actionStr            
+     * @param array $params            
+     * @param int $distUrlType            
+     * @param array $options            
      * @return string
      */
     public static function createUrl(string $actionStr, array $params = [], int $distUrlType = 0, array $options = []): string
     {
-        $route = self::findRoute($actionStr);
-        return self::createUrlByRoute($route, $params, $distUrlType, $options);
+        list ($moduleName, $controllerId, $actionId) = Application::$app->resolveActionId($actionStr);
+        return self::createUrlByName('@' . $moduleName . '/' . $controllerId . '/' . $actionId, $params, $distUrlType, $options);
     }
-    
+
     /**
      * 根据路由名称生成url
-     * 
-     * @param string $routeName
-     * @param array $params
-     * @param int $distUrlType
-     * @param array $options
+     *
+     * @param string $routeName            
+     * @param array $params            
+     * @param int $distUrlType            
+     * @param array $options            
      * @return string
      */
     public static function createUrlByName(string $routeName, array $params = [], int $distUrlType = 0, array $options = []): string
@@ -398,11 +413,11 @@ class Route
 
     /**
      * 根据路由对象生成url
-     * 
-     * @param Route $route
-     * @param array $params
-     * @param int $distUrlType
-     * @param array $options
+     *
+     * @param Route $route            
+     * @param array $params            
+     * @param int $distUrlType            
+     * @param array $options            
      * @return string
      */
     public static function createUrlByRoute(Route $route, array $params = [], int $distUrlType = 0, array $options = []): string
@@ -412,26 +427,9 @@ class Route
     }
 
     /**
-     * 根据action查找路由
-     * 
-     * @param string $actionStr
-     * @throws ServerErrorHttpException
-     * @return Route
-     */
-    public static function findRoute(string $actionStr): Route
-    {
-        list ($moduleName, $controllerId, $actionId) = Application::$app->resolveActionId($actionStr);
-        $uniqueId = $moduleName . '/' . $controllerId . '/' . $actionId;
-        if (isset(self::$actionMap[$uniqueId])) {
-            return self::$actionMap[$uniqueId];
-        }
-        throw new ServerErrorHttpException('找不到' . $uniqueId . '对应的路由');
-    }
-
-    /**
      * 根据路由名称查找路由
-     * 
-     * @param string $routeName
+     *
+     * @param string $routeName            
      * @throws ServerErrorHttpException
      * @return Route
      */

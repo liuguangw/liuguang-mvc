@@ -220,9 +220,7 @@ class Application
      */
     public function invokeRoute(Route $route): void
     {
-        $moduleName = $route->getModuleName();
-        $controllerId = $route->getControllerId();
-        $actionId = $route->getActionId();
+        list ($moduleName, $controllerId, $actionId) = $route->getRouteInfo();
         self::$response = $response = $this->runAction($moduleName, $controllerId, $actionId);
         $controller = $this->controller;
         $controller->beforeResponse($controller->actionId, $response);
