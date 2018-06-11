@@ -70,6 +70,15 @@ class Controller
             $methodInfo = new \ReflectionMethod($this, $actionMethodName);
             if ($methodInfo->isPublic()) {
                 $response = $this->invokeAction($methodInfo);
+                // 若操作返回非response对象,则交由解析器处理
+                if (! ($response instanceof Response)) {
+                    /**
+                     *
+                     * @var \liuguang\mvc\handlers\IResponseParser $parser
+                     */
+                    $parser = Application::$app->container->makeAlias('responseParser');
+                    $response = $parser->parseResponse($response);
+                }
             } else {
                 throw new ServerErrorHttpException('操作:' . $this->getUniqueActionId() . '不存在');
             }
@@ -79,7 +88,7 @@ class Controller
         return $response;
     }
 
-    private function invokeAction(\ReflectionMethod $methodInfo): Response
+    private function invokeAction(\ReflectionMethod $methodInfo)
     {
         // 获取参数
         if ($methodInfo->getNumberOfParameters() == 0) {

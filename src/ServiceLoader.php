@@ -20,6 +20,8 @@ use Symfony\Component\Cache\Simple\FilesystemCache;
 use Symfony\Component\HttpFoundation\Session\Storage\SessionStorageInterface;
 use liuguang\mvc\command\CommandLoader;
 use liuguang\mvc\command\DefaultCommandLoader;
+use liuguang\mvc\handlers\IResponseParser;
+use liuguang\mvc\handlers\DefaultResponseParser;
 
 class ServiceLoader
 {
@@ -40,6 +42,7 @@ class ServiceLoader
         $this->container->addNameMap(IErrorHandler::class, DefaultErrorHandler::class, 'errorHandler');
         $this->container->addNameMap(IRouteHandler::class, DefaultRouteHandler::class, 'routeHandler');
         $this->container->addNameMap(UrlAsset::class, DefaultUrlAsset::class, 'urlAsset');
+        $this->container->addNameMap(IResponseParser::class, DefaultResponseParser::class, 'responseParser');
         // 模板非单例
         $this->container->addNameMap(ITemplate::class, DefaultTemplate::class, 'template', false);
         $this->container->addNameMap(ClientInfo::class, '', 'clientInfo');
